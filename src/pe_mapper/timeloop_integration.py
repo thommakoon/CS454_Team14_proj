@@ -430,6 +430,7 @@ class TimeloopRunner:
                 metrics = self._generate_mock_metrics(gene, layer_spec)
         except (FileNotFoundError, subprocess.TimeoutExpired):
             # Timeloop not available, use mock metrics
+            print("Timeloop not available, using mock metrics")
             metrics = self._generate_mock_metrics(gene, layer_spec)
         
         return metrics
