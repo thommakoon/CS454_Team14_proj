@@ -414,7 +414,7 @@ This project follows a 5-step development plan:
 
 - [ ] More sophisticated Timeloop mapping generation
 - [ ] Additional dataflow patterns
-- [ ] Integration with actual hardware measurements
+- [ ] Integration with actual hardware measurements (Actual RTL design + Synthesis)
 - [ ] Visualization of Pareto fronts
 - [ ] Support for other layer types (depthwise, grouped convolutions)
 - [ ] Result persistence (save/load optimization results)
