@@ -78,13 +78,13 @@ def main():
     
     # Step 6: NSGA-II optimization (optional, can be slow)
     print("\n[Step 6] NSGA-II Optimization (optional)...")
-    print("  To run optimization, uncomment the following code:")
-    print("  pareto_genes, objectives = optimize_genes(")
-    print("      layer_spec,")
-    print("      population_size=20,")
-    print("      n_generations=10,")
-    print("  )")
-    print("  print(f'Found {len(pareto_genes)} Pareto-optimal solutions')")
+    # print("  To run optimization, uncomment the following code:")
+    # print("  pareto_genes, objectives = optimize_genes(")
+    # print("      layer_spec,")
+    # print("      population_size=20,")
+    # print("      n_generations=10,")
+    # print("  )")
+    # print("  print(f'Found {len(pareto_genes)} Pareto-optimal solutions')")
     
     # Uncomment to actually run optimization:
     print("\n  Running NSGA-II optimization...")
