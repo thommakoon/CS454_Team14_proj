@@ -87,17 +87,17 @@ def main():
     print("  print(f'Found {len(pareto_genes)} Pareto-optimal solutions')")
     
     # Uncomment to actually run optimization:
-    # print("\n  Running NSGA-II optimization...")
-    # pareto_genes, objectives = optimize_genes(
-    #     layer_spec,
-    #     population_size=10,  # Small for quick test
-    #     n_generations=5,
-    #     seed=42,
-    # )
-    # print(f"  Found {len(pareto_genes)} Pareto-optimal solutions")
-    # for i, (gene, obj) in enumerate(zip(pareto_genes[:5], objectives[:5]), 1):
-    #     print(f"    Solution {i}: {gene.dataflow}, "
-    #           f"latency={obj[0]:.6f}, energy={obj[1]:.2f}, util={-obj[2]:.2%}")
+    print("\n  Running NSGA-II optimization...")
+    pareto_genes, objectives = optimize_genes(
+        layer_spec,
+        population_size=10,  # Small for quick test
+        n_generations=5,
+        seed=42,
+    )
+    print(f"  Found {len(pareto_genes)} Pareto-optimal solutions")
+    for i, (gene, obj) in enumerate(zip(pareto_genes[:5], objectives[:5]), 1):
+        print(f"    Solution {i}: {gene.dataflow}, "
+              f"latency={obj[0]:.6f}, energy={obj[1]:.2f}, util={-obj[2]:.2%}")
     
     print("\n" + "=" * 60)
     print("Pipeline demonstration complete!")

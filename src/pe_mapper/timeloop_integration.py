@@ -366,17 +366,30 @@ class TimeloopRunner:
         self,
         gene: Gene,
         layer_spec: ConvLayerSpec,
-        output_dir: Optional[str] = None
+        output_dir: Optional[str] = None,
+        keep_outputs: bool = False
     ) -> Dict[str, float]:
         """
         Run Timeloop with given gene and layer spec.
+        
+        Args:
+            gene: The gene to evaluate
+            layer_spec: The layer specification
+            output_dir: Optional directory to save outputs. If None, uses temp directory.
+            keep_outputs: If True and output_dir is None, saves to timeloop_output/ with layer name.
         
         Returns:
             Dictionary with metrics: latency, energy, utilization, etc.
         """
         if output_dir is None:
-            self.temp_dir = tempfile.mkdtemp()
-            output_dir = self.temp_dir
+            if keep_outputs:
+                # Save to timeloop_output directory
+                output_dir = os.path.join("timeloop_output", f"{layer_spec.name}_{gene.dataflow}")
+                os.makedirs(output_dir, exist_ok=True)
+            else:
+                # Use temporary directory
+                self.temp_dir = tempfile.mkdtemp()
+                output_dir = self.temp_dir
         else:
             os.makedirs(output_dir, exist_ok=True)
         

@@ -10,6 +10,7 @@ from .onnx_parser import ConvLayerSpec, parse_onnx_model, get_resnet18_conv3_exa
 from .timeloop_integration import TimeloopRunner
 from .fitness import evaluate_gene, validate_gene_constraints, repair_gene
 from .nsga2_optimizer import GeneOptimizationProblem, optimize_genes
+from .batch_optimizer import optimize_all_models, optimize_all_layers_from_model, summarize_results
 
 __version__ = "0.1.0"
 __all__ = [
@@ -24,5 +25,8 @@ __all__ = [
     "repair_gene",
     "GeneOptimizationProblem",
     "optimize_genes",
+    "optimize_all_models",
+    "optimize_all_layers_from_model",
+    "summarize_results",
 ]
 

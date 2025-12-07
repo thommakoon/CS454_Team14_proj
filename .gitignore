@@ -35,8 +35,19 @@ env/
 
 # Project specific
 *.log
-timeloop_output/
 temp_timeloop_*/
+
+# Timeloop outputs (keep directory structure, ignore contents)
+timeloop_output/*
+!timeloop_output/.gitkeep
+!timeloop_output/README.md
+
+# Models (keep directory structure, ignore model files)
+models/*.onnx
+models/*.pb
+models/*.h5
+!models/.gitkeep
+!models/README.md
 
 # OS
 .DS_Store

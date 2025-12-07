@@ -24,11 +24,20 @@ CS454_Team14_proj/
 │       ├── timeloop_integration.py   # Timeloop YAML generation and execution
 │       ├── fitness.py                # Fitness evaluation function
 │       ├── nsga2_optimizer.py        # NSGA-II optimization
-│       └── dataflow_validation.py    # IS/WS/RS template validation
+│       ├── dataflow_validation.py    # IS/WS/RS template validation
+│       └── batch_optimizer.py        # Batch optimization utilities
 ├── examples/
 │   ├── test_single_gene.py          # Step 2: Single gene evaluation
 │   ├── validate_dataflows.py        # Step 3: Dataflow validation
-│   └── run_optimization.py          # Step 5: NSGA-II optimization
+│   ├── run_optimization.py          # Step 5: NSGA-II optimization
+│   ├── use_real_model.py            # Using real ONNX models
+│   └── batch_optimize_all_models.py # Batch optimization for all models
+├── models/                           # ONNX model files (place your .onnx files here)
+│   └── README.md                     # Instructions for getting models
+├── timeloop_output/                  # Timeloop execution outputs
+│   └── README.md                     # Information about Timeloop outputs
+├── scripts/
+│   └── download_model.py            # Helper script to download/convert models
 ├── main.py                           # Main entry point with full pipeline demo
 ├── pyproject.toml                    # Project dependencies
 └── README.md                         # This file
@@ -109,10 +118,14 @@ If Timeloop is not available, the system will use mock metrics for testing.
 
 ### Quick Start
 
-Run the main demonstration:
-
+**1. Setup the environment:**
 ```bash
-python main.py
+uv sync
+```
+
+**2. Run the main demonstration:**
+```bash
+uv run python main.py
 ```
 
 This demonstrates the complete pipeline:
@@ -121,6 +134,29 @@ This demonstrates the complete pipeline:
 3. Evaluating genes with Timeloop
 4. Validating dataflow templates
 5. Testing fitness functions
+6. Running NSGA-II optimization (if enabled)
+
+**3. Run NSGA-II optimization:**
+```bash
+uv run python examples/run_optimization.py
+```
+
+### Run NSGA-II Optimization
+
+**Simplest way** (uses synthetic example):
+```bash
+uv run python examples/run_optimization.py
+```
+
+**With real model**:
+```bash
+# Download a model first
+uv run python scripts/download_model.py resnet18
+
+# Then optimize
+uv run python examples/use_real_model.py
+# (Uncomment the optimization code in the script)
+```
 
 ### Step-by-Step Examples
 
@@ -159,18 +195,67 @@ Runs multi-objective optimization:
 - Objectives: (latency, energy, -utilization)
 - Returns Pareto-optimal solutions
 
+#### Using Real ONNX Models
+
+```bash
+# First, download a model
+uv run python scripts/download_model.py resnet18
+
+# Then use it
+uv run python examples/use_real_model.py
+```
+
+This example shows how to:
+- Load a real ONNX model from `models/` directory
+- Extract convolutional layers
+- Optimize real CNN layers
+
+#### Batch Optimization (All Models)
+
+```bash
+# Optimize all models in models/ directory
+uv run python examples/batch_optimize_all_models.py
+```
+
+This will:
+- Find all `.onnx` files in `models/`
+- Optimize all convolutional layers from each model
+- Generate summary statistics
+
+**Note**: This can take a very long time! Adjust `max_layers_per_model` in the script to limit layers per model.
+
+### Getting Models
+
+Download or convert models to ONNX format:
+
+```bash
+# Using the helper script (requires PyTorch)
+uv run python scripts/download_model.py resnet18
+uv run python scripts/download_model.py resnet50
+uv run python scripts/download_model.py mobilenet_v2
+
+# Or manually convert from PyTorch/TensorFlow
+# See models/README.md for details
+```
+
 ### Programmatic Usage
 
 ```python
 from pe_mapper import (
     Gene,
     get_resnet18_conv3_example,
+    parse_onnx_model,
     evaluate_gene,
     optimize_genes,
 )
 
-# Get layer specification
+# Option 1: Use synthetic example
 layer_spec = get_resnet18_conv3_example()
+
+# Option 2: Parse from ONNX model
+from pe_mapper import parse_onnx_model
+layers = parse_onnx_model("models/resnet18.onnx")
+layer_spec = layers[0]  # Use first conv layer
 
 # Create a gene
 gene = Gene(
@@ -196,12 +281,23 @@ gene = Gene(
 latency, energy, neg_utilization = evaluate_gene(gene, layer_spec)
 utilization = -neg_utilization
 
-# Run optimization
+# Run optimization (single layer)
 pareto_genes, objectives = optimize_genes(
     layer_spec,
     population_size=20,
     n_generations=10,
 )
+
+# Batch optimization (all models in models/ directory)
+from pe_mapper import optimize_all_models, summarize_results
+
+results = optimize_all_models(
+    models_dir="models",
+    population_size=20,
+    n_generations=10,
+    max_layers_per_model=3,  # Optional: limit layers per model
+)
+summarize_results(results)
 ```
 
 ## Gene Definition
@@ -245,6 +341,46 @@ The optimization minimizes three objectives:
 
 NSGA-II finds the Pareto front of solutions that trade off these objectives.
 
+## Batch Optimization
+
+The project supports batch processing to optimize multiple models and layers:
+
+### Optimize All Models
+```python
+from pe_mapper import optimize_all_models, summarize_results
+
+# Optimize all .onnx files in models/ directory
+results = optimize_all_models(
+    models_dir="models",
+    population_size=20,
+    n_generations=10,
+    max_layers_per_model=3,  # Optional: limit for faster testing
+)
+
+# Print summary
+summarize_results(results)
+```
+
+### Optimize All Layers from One Model
+```python
+from pe_mapper import optimize_all_layers_from_model
+
+# Optimize all conv layers from a single model
+results = optimize_all_layers_from_model(
+    "models/resnet18.onnx",
+    population_size=20,
+    n_generations=10,
+)
+```
+
+### Command Line
+```bash
+# Optimize all models in models/ directory
+uv run python examples/batch_optimize_all_models.py
+```
+
+**Note**: Batch optimization can take a very long time. Adjust `max_layers_per_model` to limit the number of layers processed per model.
+
 ## Development Plan
 
 This project follows a 5-step development plan:
@@ -257,19 +393,31 @@ This project follows a 5-step development plan:
 
 ## Notes
 
-- **Mock Metrics**: If Timeloop is not installed, the system uses heuristic-based mock metrics for testing
-- **Timeloop Integration**: The Timeloop YAML generation is simplified; production use may require more detailed specs
-- **Gene Encoding**: The current gene encoding is minimal; can be extended for more complex scenarios
-- **Constraints**: Genes are automatically validated and repaired to satisfy layer dimension constraints
+- **Mock Metrics**: If Timeloop is not installed, the system uses heuristic-based mock metrics for testing. This allows you to test the full pipeline without Timeloop.
+- **Timeloop Integration**: The Timeloop YAML generation is simplified; production use may require more detailed specs. The code structure is ready for real Timeloop integration.
+- **Gene Encoding**: The current gene encoding is minimal but complete; can be extended for more complex scenarios.
+- **Constraints**: Genes are automatically validated and repaired to satisfy layer dimension constraints.
+- **Batch Processing**: The batch optimizer processes models sequentially. For very large batches, consider parallel processing or limiting layers per model.
+- **Performance**: NSGA-II runtime depends on population size, generations, and Timeloop evaluation time. Start with small parameters for testing.
+
+## Features
+
+✅ **Gene-based encoding**: Complete hardware and mapping configuration  
+✅ **Multiple dataflows**: IS, WS, and RS templates  
+✅ **ONNX integration**: Parse real CNN models  
+✅ **Timeloop integration**: Generate architecture and mapping specs  
+✅ **NSGA-II optimization**: Multi-objective Pareto-optimal solutions  
+✅ **Batch processing**: Optimize multiple models and layers automatically  
+✅ **Mock metrics**: Works without Timeloop for testing  
 
 ## Future Work
 
-- [ ] Support for multiple layers
 - [ ] More sophisticated Timeloop mapping generation
 - [ ] Additional dataflow patterns
 - [ ] Integration with actual hardware measurements
 - [ ] Visualization of Pareto fronts
 - [ ] Support for other layer types (depthwise, grouped convolutions)
+- [ ] Result persistence (save/load optimization results)
 
 ## License
 
